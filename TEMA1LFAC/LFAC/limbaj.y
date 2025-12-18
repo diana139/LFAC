@@ -71,10 +71,35 @@ global_definitions
     ;
 
 decl_var
-    : TYPE vars ';'
-    | ID ID ';'
-    | TYPE ID ASSIGN expr ';'
-    | ID ID ASSIGN expr ';'
+    : TYPE vars ';'{
+        for(auto id : *$2) {
+            if(!symTable->addVariable(id, *$1, yylineno)){
+                yyerror(("Variable " + id + " already declared").c_str());
+            }
+        }
+    }
+    | ID ID ';'{
+        if(!symTable->classExists(*$1) && !symTable->isPrimitive(*$1)){
+            yyerror(("Type " + *$1 + " not declared").c_str());
+        }
+        if(!symTable->addVariable(*$2, *$1 , yylineno)){
+            yyerror(("Variable " + *$2 + " already declared").c_str());
+        }
+    }
+    | TYPE ID ASSIGN expr ';'{
+        string left_type = *$1;  
+        if(lhsType != $3) {
+            yyerror(("Type mismatch: cannot assign " + $3 + " to " + lhsType).c_str());
+        }   
+    }
+    | ID ID ASSIGN expr ';'{
+        if(!symTable->classExists(*$1) && !symTable->isPrimitive(*$1)){
+            yyerror(("Type " + *$1 + " not declared").c_str());
+        }
+        if(!symTable->addVariable(*$2, *$1 , yylineno)){
+            yyerror(("Variable " + *$2 + " already declared").c_str());
+        }
+    }
     ;
 vars:
     vars ',' ID
@@ -158,13 +183,65 @@ statement
     ;
 
 simple_stmt
-    : ID ASSIGN expr                  
-    | ID ASSIGN NEW ID '(' ')'        
-    | ID '.' ID ASSIGN expr           
-    | ID '(' call_list ')'            
-    | ID '.' ID '(' call_list ')'     
+    : ID ASSIGN expr {
+          if(!symTable->exists(*$1))
+              yyerror(("Variable " + *$1 + " used before declaration").c_str());
+          string left_type = symTable->getType(*$1);
+          if(left_type != $3)
+              yyerror(("Type mismatch: cannot assign " + $3 + " to " + left_type).c_str());
+      }                
+    | ID ASSIGN NEW ID '(' ')' {
+          if(!symTable->exists(*$1))
+              yyerror(("Variable " + *$1 + " used before declaration").c_str());
+          if(!symTable->classExists(*$4))
+              yyerror(("Class " + *$4 + " not declared").c_str());
+          string left_type = symTable->getType(*$1);
+          string right_type = *$4;
+          if(left_type != right_type)
+              yyerror(("Type mismatch: cannot assign " + right_type + " to " + left_type).c_str());
+      }   
+    | ID '.' ID ASSIGN expr  {
+          if(!symTable->exists(*$1))
+              yyerror(("Variable " + *$1 + " used before declaration").c_str());
+
+          string classType = symTable->getType(*$1);
+
+          if(!symTable->classHasField(classType, *$3))
+              yyerror(("Class " + classType + " has no field " + *$3).c_str());
+
+          string fieldType = symTable->getFieldType(classType, *$3);
+          if(fieldType != $5)
+              yyerror(("Field assignment type mismatch in " + *$3).c_str());
+      }         
+    | ID '(' call_list ')' {
+          if(!symTable->functionExists(*$1))
+              yyerror(("Function " + *$1 + " used before declaration").c_str());
+
+          auto expected = symTable->getFunctionParams(*$1);
+          if(expected != $3)
+              yyerror(("Function call parameters mismatch for " + *$1).c_str());
+
+          $$ = symTable->getFunctionReturnType(*$1);
+      }
+    | ID '.' ID '(' call_list ')'{
+          if(!symTable->exists(*$1))
+              yyerror(("Variable " + *$1 + " used before declaration").c_str());
+
+          string classType = symTable->getType(*$1);
+
+          if(!symTable->classHasMethod(classType, *$3))
+              yyerror(("Class " + classType + " has no method " + *$3).c_str());
+
+          auto expected = symTable->getMethodParams(classType, *$3);
+          if(expected != $5)
+              yyerror(("Method call parameter mismatch in " + *$3).c_str());
+
+          $$ = symTable->getMethodReturnType(classType, *$3);
+      } 
     | PRINT '(' expr ')'              
-    | RETURN expr
+    | RETURN expr{
+        $$ = $2;
+    }
     ;
 
 control_stmt
@@ -175,20 +252,81 @@ control_stmt
     ;
 
 expr
-    : expr '+' expr
-    | expr '-' expr
-    | expr '*' expr
-    | expr '/' expr
-    | expr '%' expr
-    | '-' expr %prec UMINUS
-    | '(' expr ')'
-    | NR_INT
-    | NR_FLOAT
-    | STRING_VAL
-    | ID
-    | ID '.' ID           
-    | ID '(' call_list ')'    
-    | ID '.' ID '(' call_list ')' 
+    : expr '+' expr{
+        if($1 != $3) yyerror(("Type mismatch in addition: " + $1 + " + " + $3).c_str());
+        $$ = $1;
+    }
+    | expr '-' expr{
+        if($1 != $3) yyerror(("Type mismatch in addition: " + $1 + " + " + $3).c_str());
+        $$ = $1;
+    }
+    | expr '*' expr{
+        if($1 != $3) yyerror(("Type mismatch in addition: " + $1 + " + " + $3).c_str());
+        $$ = $1;
+    }
+    | expr '/' expr{
+        if($1 != $3) yyerror(("Type mismatch in addition: " + $1 + " + " + $3).c_str());
+        $$ = $1;
+    }
+    | expr '%' expr{
+        if($1 != $3) yyerror(("Type mismatch in addition: " + $1 + " + " + $3).c_str());
+        $$ = $1;    
+    }
+    | '-' expr %prec UMINUS{
+         $$ =$2;
+    }
+    | '(' expr ')'{
+        $$ =$2;
+    }
+    | NR_INT{
+        $$ = "int";
+    }
+    | NR_FLOAT{
+        $$ ="float";
+    }
+    | STRING_VAL{
+        $$ = "string"; 
+    }
+    | ID {
+          if(!symTable->exists(*$1)) {
+              yyerror(("Variable " + *$1 + " used before declaration").c_str());
+          }
+          $$ = symTable->getType(*$1);
+    }
+    | ID '.' ID {
+        if(!symTable->exists(*$1)){
+            yyerror("Variable not declared");
+        }
+        string classType = symTable->getType(*$1);
+        if(!symTable->classHasField(classType, *$3)){
+            yyerror("Field not declared in class");
+        }
+        $$ = symTable->getFieldType(classType, *$3);
+    }
+    | ID '(' call_list ')'{
+        if(!symTable->functionExists(*$1)){
+            yyerror("Function not declared");
+        }
+        auto expected = symTable->getFunctionParams(*$1);
+        if(expected != $3){
+            yyerror("Function call parameter mismatch");
+        }
+        $$ = symTable->getFunctionReturnType(*$1);
+    }    
+    | ID '.' ID '(' call_list ')' {
+        if(!symTable->exists(*$1)){
+            yyerror("Object not declared");
+        }
+        string classType = symTable->getType(*$1);
+        if(!symTable->classHasMethod(classType, *$3)){
+            yyerror("Method not declared in class");
+        }
+        auto expected = symTable->getMethodParams(classType, *$3);
+        if(expected != $5){
+            yyerror("Method call parameter mismatch");
+        }
+        $$ = symTable->getMethodReturnType(classType, *$3);
+    }
     ;
 expr_bool:
     | TRUE
