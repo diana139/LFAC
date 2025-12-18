@@ -1,0 +1,27 @@
+function int cmmdc(int a, int b) begin
+    loop (a != b) begin
+        verify (a > b) begin
+            a <- a - b;
+        end
+        doesn't_verify begin
+            b <-b - a;
+        end
+    end
+    
+    return a;
+end
+
+int x;
+int y;
+int divizor;
+
+begin
+    x <- 24;
+    y <- -18;
+    x<-x-y; 
+    
+    divizor <- cmmdc(x, y);
+    
+    Print("CMMDC este:");
+    Print(divizor);
+end

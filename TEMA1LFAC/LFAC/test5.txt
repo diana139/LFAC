@@ -1,0 +1,55 @@
+class Calculator
+begin
+    public
+        function int computeHalf(int a)
+        begin
+            int result;
+            result <- a / 2;      
+            return result;
+        end
+        function void printDouble(int a)
+        begin
+            Print(a * 2);
+        end
+end
+function bool par(int x)
+begin 
+    int a;
+    verify (x%2==0) 
+    begin
+    return FALSE;
+    end
+    doesn't_verify begin return 1;
+    end
+end
+
+int x, Z;
+int y<-10;
+int suma<-0;
+
+begin
+    y<-2;
+    x<-par(y)+1;
+    Print(x);
+    counted_steps (i <- 1; i <= 10; i <- i + 1) 
+    begin
+        suma <- suma + i;
+        Print(i);
+    end
+    calc <- new Calculator();
+    x <- 20;
+    y <- calc.computeHalf(x);
+    Print(y);                 
+    calc.printDouble(y);       
+    verify (y > 5) begin
+        Print(42);
+    end
+
+    loop ((x-3>0) && (x<10)) begin
+        Print(x);
+        x <- x - 5;
+    end
+    loop(3) begin
+    x<-3;
+    end
+end

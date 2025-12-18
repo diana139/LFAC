@@ -1,0 +1,7 @@
+int x;
+begin
+    x <= 10;
+    verify (x > 5) begin
+         Print(x);
+    end
+end

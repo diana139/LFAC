@@ -1,0 +1,35 @@
+class Calculator begin
+    public int limita;
+    private float constanta;
+
+    public function int aduna(int a, int b) begin
+        int rezultat;
+        rezultat <= a + b;
+        
+        verify (rezultat > 100) begin
+            Print("Numar mare");
+        end
+        doesn't_verify begin
+            Print("Numar mic");
+        end
+
+        return rezultat;
+    end
+end
+
+int x;
+int y;
+Calculator calc;  
+
+
+begin
+ 
+    calc <= new Calculator();
+    
+    x <= 50;
+    y <= 60;
+    
+    calc.limita <= calc.aduna(x, y);
+    
+    Print(calc.limita);
+end

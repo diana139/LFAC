@@ -1,0 +1,22 @@
+int i;
+int j;
+int sum;
+bool flag;
+
+begin
+    sum <= 0;
+    flag <= true;
+
+    counted_steps (i <= 0; i < 5; i <= i + 1) begin
+        
+        verify ( (i == 0 || i == 2 || i == 4) && flag ) begin
+            sum <= sum + i * 2;
+        end
+        
+        verify ( !(i < 3) ) begin
+            sum <= sum + 1;
+        end
+    end
+
+    Print(sum);
+end

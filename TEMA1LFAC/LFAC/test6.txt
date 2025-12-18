@@ -1,0 +1,21 @@
+class MathUtils
+begin
+    public
+        int val;
+        function int square(int x)
+        begin
+            int r;
+            r <- x * x;
+            return r;
+        end
+end
+
+int a;
+int result;
+MathUtils sum;
+begin
+    int x;
+    util <- new MathUtils();
+    util.val <- 6;
+    Print(util.val-3);
+end

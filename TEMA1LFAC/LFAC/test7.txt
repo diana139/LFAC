@@ -1,0 +1,14 @@
+int i;
+int suma;
+
+begin
+    suma <- 0;
+    counted_steps (i <- 1; i <= 10; i <- i + 1) 
+    begin
+        suma <- suma + i;
+        Print(i);
+    end
+
+    Print("Suma totala este:");
+    Print(suma);
+end
