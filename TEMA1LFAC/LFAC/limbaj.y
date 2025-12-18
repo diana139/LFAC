@@ -8,10 +8,10 @@
 #include <iostream>
 #include <string>
 #include <stdio.h>
-/* #include "SymTable.h" */
+#include "SymTable.h" 
+#include <vector>
 
 using namespace std;
-
 extern FILE* yyin;
 extern char* yytext;
 extern int yylineno;
